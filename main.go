@@ -46,6 +46,7 @@ func parseCSV(filePath string) []student {
 		if len(sArr) < 7 {
 			panic("Malformed Record")
 		}
+		// Parse nth index element from an array of strings as integer
 		var nInt func(n uint8) int = func(n uint8) int {
 			num, err := strconv.Atoi(strings.TrimSpace(sArr[n]))
 			if err!=nil {
