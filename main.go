@@ -41,8 +41,8 @@ func parseCSV(filePath string) []student {
 		if len(sArr) < 7 {
 			return
 		}
-		var getNumber func(n uint8) int = func(n uint8) int {
-			num, err := strconv.Atoi(strings.TrimSpace(sArr[n]))
+		var getNumber func(arr []string, n uint8) int = func(arr []string, n uint8) int {
+			num, err := strconv.Atoi(strings.TrimSpace(arr[n]))
 			if err!=nil {
 				return 0
 			}
@@ -52,10 +52,10 @@ func parseCSV(filePath string) []student {
 			firstName: strings.TrimSpace(sArr[0]),
 			lastName: strings.TrimSpace(sArr[1]),
 			university: strings.TrimSpace(sArr[2]),
-			test1Score: getNumber(3),
-			test2Score: getNumber(4),
-			test3Score: getNumber(5),
-			test4Score: getNumber(6),
+			test1Score: getNumber(sArr, 3),
+			test2Score: getNumber(sArr, 4),
+			test3Score: getNumber(sArr, 5),
+			test4Score: getNumber(sArr, 6),
 		})
 	}
 
