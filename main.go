@@ -31,26 +31,26 @@ type studentStat struct {
 func parseCSV(filePath string) []student {
 	f, err := os.Open(filePath)
 	gs := make([]student, 0, 20)
-	if err!=nil {
+	if err != nil {
 		return nil
 	}
 	defer f.Close()
 	reader := bufio.NewReader(f)
-	var parseLine func(line string)= func(line string) {
+	var parseLine func(line string) = func(line string) {
 		sArr := strings.Split(line, ",")
 		if len(sArr) < 7 {
 			return
 		}
 		var getNumber func(arr []string, n uint8) int = func(arr []string, n uint8) int {
 			num, err := strconv.Atoi(strings.TrimSpace(arr[n]))
-			if err!=nil {
+			if err != nil {
 				return 0
 			}
 			return num
 		}
 		gs = append(gs, student{
-			firstName: strings.TrimSpace(sArr[0]),
-			lastName: strings.TrimSpace(sArr[1]),
+			firstName:  strings.TrimSpace(sArr[0]),
+			lastName:   strings.TrimSpace(sArr[1]),
 			university: strings.TrimSpace(sArr[2]),
 			test1Score: getNumber(sArr, 3),
 			test2Score: getNumber(sArr, 4),
@@ -62,7 +62,7 @@ func parseCSV(filePath string) []student {
 	idx := 0
 	for {
 		line, err := reader.ReadString('\n')
-		if err!=nil {
+		if err != nil {
 			if err == io.EOF {
 				parseLine(line)
 				break
@@ -70,7 +70,7 @@ func parseCSV(filePath string) []student {
 			return nil
 		}
 		idx++
-		if idx==1 {
+		if idx == 1 {
 			continue
 		}
 		parseLine(line)
@@ -82,25 +82,25 @@ func parseCSV(filePath string) []student {
 func calculateGrade(students []student) []studentStat {
 	studentStatArray := make([]studentStat, 0, 20)
 	for _, value := range students {
-		avg := func(s student) float32{
-			return float32(s.test1Score + s.test2Score + s.test3Score + s.test4Score)/4
+		avg := func(s student) float32 {
+			return float32(s.test1Score+s.test2Score+s.test3Score+s.test4Score) / 4
 		}
 		var grade Grade
 		finalScore := avg(value)
 		switch {
-			case finalScore<35:
-				grade=F
-			case finalScore>=35 && finalScore < 50:
-				grade=C
-			case finalScore>=50 && finalScore<70:
-				grade=B
-			case finalScore>=70:
-				grade=A 
+		case finalScore < 35:
+			grade = F
+		case finalScore >= 35 && finalScore < 50:
+			grade = C
+		case finalScore >= 50 && finalScore < 70:
+			grade = B
+		case finalScore >= 70:
+			grade = A
 		}
 		stat := studentStat{
-			student: value,
+			student:    value,
 			finalScore: finalScore,
-			grade: grade,
+			grade:      grade,
 		}
 		studentStatArray = append(studentStatArray, stat)
 	}
@@ -110,11 +110,11 @@ func calculateGrade(students []student) []studentStat {
 
 func findOverallTopper(gradedStudents []studentStat) studentStat {
 	var topper studentStat
-	if len(gradedStudents)<1 {
+	if len(gradedStudents) < 1 {
 		return studentStat{}
 	}
 	for i, value := range gradedStudents {
-		if i==0 {
+		if i == 0 {
 			topper = value
 			continue
 		}
@@ -128,20 +128,20 @@ func findOverallTopper(gradedStudents []studentStat) studentStat {
 
 func findTopperPerUniversity(gs []studentStat) map[string]studentStat {
 	topperMap := make(map[string]studentStat)
-	findTopperByUniversity  := func (gs []studentStat, university string) []studentStat  {
+	findTopperByUniversity := func(gs []studentStat, university string) []studentStat {
 		filteredList := make([]studentStat, 0, 20)
 		for _, value := range gs {
-			if value.university == university{
+			if value.university == university {
 				filteredList = append(filteredList, value)
 			}
 		}
 		return filteredList
-	} 
+	}
 	for _, value := range gs {
 		_, ok := topperMap[value.university]
 		if !ok {
-			topperMap[value.university]=findOverallTopper(findTopperByUniversity(gs, value.university))
+			topperMap[value.university] = findOverallTopper(findTopperByUniversity(gs, value.university))
 		}
-	}	
+	}
 	return topperMap
 }
