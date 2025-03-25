@@ -2,11 +2,10 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
-	// "sync"
 )
 
 type Grade string
@@ -31,57 +30,53 @@ type studentStat struct {
 
 func parseCSV(filePath string) []student {
 	f, err := os.Open(filePath)
-	array := make([]student, 0, 20)
+	gs := make([]student, 0, 20)
 	if err!=nil {
-		panic(fmt.Sprintf("Failed Reading the file: %v", err.Error()))
+		return nil
 	}
 	defer f.Close()
-	// Did it concurrently earlier but had to skip it to pass tests.
-	// wg := &sync.WaitGroup{}
 	reader := bufio.NewReader(f)
-	idx := 0
 	var parseLine func(line string)= func(line string) {
-		// defer wg.Done()
 		sArr := strings.Split(line, ",")
 		if len(sArr) < 7 {
-			panic("Malformed Record")
+			return
 		}
-		// Parse nth index element from an array of strings as integer
-		var nInt func(n uint8) int = func(n uint8) int {
+		var getNumber func(n uint8) int = func(n uint8) int {
 			num, err := strconv.Atoi(strings.TrimSpace(sArr[n]))
 			if err!=nil {
-				panic(fmt.Sprintf("Invalid record %v", line))
+				return 0
 			}
 			return num
 		}
-		array = append(array, student{
+		gs = append(gs, student{
 			firstName: strings.TrimSpace(sArr[0]),
 			lastName: strings.TrimSpace(sArr[1]),
 			university: strings.TrimSpace(sArr[2]),
-			test1Score: nInt(3),
-			test2Score: nInt(4),
-			test3Score: nInt(5),
-			test4Score: nInt(6),
+			test1Score: getNumber(3),
+			test2Score: getNumber(4),
+			test3Score: getNumber(5),
+			test4Score: getNumber(6),
 		})
 	}
 
+	idx := 0
 	for {
 		line, err := reader.ReadString('\n')
 		if err!=nil {
-			parseLine(line)
-			break
+			if err == io.EOF {
+				parseLine(line)
+				break
+			}
+			return nil
 		}
 		idx++
 		if idx==1 {
 			continue
-		} 
-		// wg.Add(1)
-		// go parseLine(line)
+		}
 		parseLine(line)
 
 	}
-	// wg.Wait()
-	return array
+	return gs
 }
 
 func calculateGrade(students []student) []studentStat {
@@ -116,14 +111,13 @@ func calculateGrade(students []student) []studentStat {
 func findOverallTopper(gradedStudents []studentStat) studentStat {
 	var topper studentStat
 	if len(gradedStudents)<1 {
-		panic("Empty Graded List received")
+		return studentStat{}
 	}
 	for i, value := range gradedStudents {
 		if i==0 {
 			topper = value
 			continue
 		}
-
 		if topper.finalScore <= value.finalScore {
 			topper = value
 		}
@@ -134,15 +128,20 @@ func findOverallTopper(gradedStudents []studentStat) studentStat {
 
 func findTopperPerUniversity(gs []studentStat) map[string]studentStat {
 	topperMap := make(map[string]studentStat)
+	findTopperByUniversity  := func (gs []studentStat, university string) []studentStat  {
+		filteredList := make([]studentStat, 0, 20)
+		for _, value := range gs {
+			if value.university == university{
+				filteredList = append(filteredList, value)
+			}
+		}
+		return filteredList
+	} 
 	for _, value := range gs {
-		topper, ok := topperMap[value.university]
+		_, ok := topperMap[value.university]
 		if !ok {
-			topperMap[value.university]=value
-			continue
+			topperMap[value.university]=findOverallTopper(findTopperByUniversity(gs, value.university))
 		}
-		if topper.finalScore <= value.finalScore {
-			topperMap[value.university] = value
-		}
-	}
+	}	
 	return topperMap
 }
